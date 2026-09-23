@@ -4,7 +4,7 @@ import type { PlaceWithRoute, ViewMode, RouteInfo } from '@/types';
 import {
   Plus, MapPin, Clock, X, Loader2,
   Table, Calendar, Map as MapIcon, Footprints, Bus, Car, Bike,
-  ChevronUp, ChevronDown, Pencil, Trash2, RotateCcw, Crosshair, ArrowRight, Navigation,
+  ChevronUp, ChevronDown, Pencil, Trash2, RotateCcw, Crosshair, ArrowRight, Navigation, ExternalLink,
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -18,6 +18,7 @@ import { fetchWeather } from '@/services/weatherService';
 import FAB from '@/components/FAB';
 import ConfirmSheet from '@/components/ConfirmSheet';
 import MapLinks from '@/components/MapLinks';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { parseMapLink, type ParsedLink } from '@/utils/mapLinks';
 
 /** 地址解析候选项 */
@@ -121,13 +122,13 @@ export default function ItineraryPlanner() {
   // 弹窗表单
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [f, setF] = useState({ name: '', address: '', time: '', duration: '', notes: '', lat: 0, lng: 0 });
+  const [f, setF] = useState({ name: '', address: '', time: '', duration: '', notes: '', lat: 0, lng: 0, mapLink: '' });
+  useBodyScrollLock(modalOpen);
   const [geocoding, setGeocoding] = useState(false);
   const [advOpen, setAdvOpen] = useState(false);
   const [candidates, setCandidates] = useState<GeoCandidate[]>([]);
   const [geoError, setGeoError] = useState<string | null>(null);
   // 粘贴地图分享链接取坐标
-  const [linkInput, setLinkInput] = useState('');
   const [linkHint, setLinkHint] = useState<Extract<ParsedLink, { ok: true }> | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   // 删除确认
@@ -199,13 +200,12 @@ export default function ItineraryPlanner() {
 
   // ---- 表单 ----
   const resetForm = useCallback(() => {
-    setF({ name: '', address: '', time: '', duration: '', notes: '', lat: 0, lng: 0 });
+    setF({ name: '', address: '', time: '', duration: '', notes: '', lat: 0, lng: 0, mapLink: '' });
     setEditingId(null);
     setCalcError(null);
     setAdvOpen(false);
     setCandidates([]);
     setGeoError(null);
-    setLinkInput('');
     setLinkHint(null);
     setLinkError(null);
   }, []);
@@ -213,10 +213,9 @@ export default function ItineraryPlanner() {
   const openAdd = () => { resetForm(); setModalOpen(true); };
   const openEdit = (p: PlaceWithRoute) => {
     setEditingId(p.id);
-    setF({ name: p.name, address: p.address, time: p.time, duration: p.duration, notes: p.notes, lat: p.lat, lng: p.lng });
+    setF({ name: p.name, address: p.address, time: p.time, duration: p.duration, notes: p.notes, lat: p.lat, lng: p.lng, mapLink: p.mapLink ?? '' });
     setCandidates([]);
     setGeoError(null);
-    setLinkInput('');
     setLinkHint(null);
     setLinkError(null);
     setModalOpen(true);
@@ -233,20 +232,20 @@ export default function ItineraryPlanner() {
     }));
   };
 
-  /** 输入时实时识别，认出来就给提示；错误提示等点了「填入」再显示 */
+  /** 输入时实时识别，认出来就给提示；错误提示等点了「取坐标」再显示 */
   const handleLinkChange = (v: string) => {
-    setLinkInput(v);
+    setF((prev) => ({ ...prev, mapLink: v }));
     setLinkError(null);
     const r = parseMapLink(v);
     setLinkHint(r.ok ? r : null);
   };
 
-  /** 把地图分享链接里的坐标填进表单（各家坐标系已在解析时转回 WGS-84） */
+  /** 把地图分享链接里的坐标填进表单（各家坐标系已在解析时转回 WGS-84）；链接本身始终随地点保存 */
   const applyLink = () => {
-    const r = parseMapLink(linkInput);
+    const r = parseMapLink(f.mapLink);
     if ('msg' in r) {
       setLinkHint(null);
-      setLinkError(r.msg);
+      setLinkError(r.msg + '（链接已可保存，跳转不受影响）');
       return;
     }
     setLinkHint(r);
@@ -300,11 +299,13 @@ export default function ItineraryPlanner() {
       updatePlace(currentTripId, currentDayIndex, editingId, {
         name: f.name.trim(), address: f.address, time: f.time,
         duration: f.duration, notes: f.notes, lat: f.lat, lng: f.lng,
+        mapLink: f.mapLink.trim(),
       });
     } else {
       addPlace(currentTripId, currentDayIndex, {
         id: crypto.randomUUID(), name: f.name.trim(), address: f.address, time: f.time,
         duration: f.duration, notes: f.notes, lat: f.lat, lng: f.lng,
+        mapLink: f.mapLink.trim(),
       });
     }
     setModalOpen(false);
@@ -546,6 +547,18 @@ export default function ItineraryPlanner() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[15px] font-medium">{p.name}</span>
                   {p.time && <span className="tag"><Clock size={10} />{p.time}</span>}
+                  {p.mapLink && (
+                    <a
+                      href={p.mapLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="tag"
+                      title="打开保存的地图链接"
+                      aria-label={`打开 ${p.name} 的地图链接`}
+                    >
+                      <ExternalLink size={10} />地图
+                    </a>
+                  )}
                 </div>
                 {(p.duration || p.address) && (
                   <p className="text-[11px] mt-1 truncate" style={{ color: 'var(--ink-3)' }}>
@@ -597,7 +610,14 @@ export default function ItineraryPlanner() {
                   </span>
                 </td>
                 <td>
-                  <div className="font-medium text-[13px]">{p.name}</div>
+                  <div className="font-medium text-[13px] flex items-center gap-1.5">
+                    {p.name}
+                    {p.mapLink && (
+                      <a href={p.mapLink} target="_blank" rel="noreferrer" aria-label={`打开 ${p.name} 的地图链接`} style={{ color: 'var(--ink-3)' }}>
+                        <ExternalLink size={13} />
+                      </a>
+                    )}
+                  </div>
                   {p.address && <div className="text-[11px] mt-0.5" style={{ color: 'var(--ink-3)' }}>{p.address}</div>}
                 </td>
                 <td className="text-[13px] tabular-nums">{p.time || '—'}</td>
@@ -773,6 +793,31 @@ export default function ItineraryPlanner() {
                 )}
               </div>
 
+              {/* 保存地图分享链接：下次在地点卡片上点图标即可直接跳回这个地址 */}
+              <div>
+                <label className="form-label">地图链接（选填）</label>
+                <div className="flex gap-2">
+                  <input
+                    className="input-field"
+                    inputMode="url"
+                    autoComplete="off"
+                    placeholder="地图 App 分享 → 复制链接 → 粘贴"
+                    value={f.mapLink}
+                    onChange={(e) => handleLinkChange(e.target.value)}
+                  />
+                  <button type="button" className="btn-outline shrink-0" onClick={applyLink} disabled={!f.mapLink.trim()}>
+                    取坐标
+                  </button>
+                </div>
+                <p className="field-hint">保存后，地点卡片上会出现跳转图标，点了直达地图里的这个位置</p>
+                {linkHint && (
+                  <p className="field-hint">
+                    已识别（{linkHint.label}）：{linkHint.lat.toFixed(5)}, {linkHint.lng.toFixed(5)}
+                  </p>
+                )}
+                {linkError && <p className="field-hint" style={{ color: 'var(--danger)' }}>{linkError}</p>}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="form-label">到达时间</label>
@@ -802,30 +847,6 @@ export default function ItineraryPlanner() {
                 </button>
                 {advOpen && (
                   <div className="mt-2 space-y-3">
-                    {/* 最准的办法：在地图 App 里选好点，把分享链接粘回来自动取坐标 */}
-                    <div>
-                      <label className="form-label">从地图链接取坐标</label>
-                      <div className="flex gap-2">
-                        <input
-                          className="input-field"
-                          inputMode="url"
-                          autoComplete="off"
-                          placeholder="地图 App 分享 → 复制链接 → 粘贴"
-                          value={linkInput}
-                          onChange={(e) => handleLinkChange(e.target.value)}
-                        />
-                        <button type="button" className="btn-outline shrink-0" onClick={applyLink} disabled={!linkInput.trim()}>
-                          填入
-                        </button>
-                      </div>
-                      {linkHint && (
-                        <p className="field-hint">
-                          已识别（{linkHint.label}）：{linkHint.lat.toFixed(5)}, {linkHint.lng.toFixed(5)}
-                        </p>
-                      )}
-                      {linkError && <p className="field-hint" style={{ color: 'var(--danger)' }}>{linkError}</p>}
-                    </div>
-
                     <button className="btn-outline w-full" onClick={handleGeocode} disabled={geocoding || !f.address.trim()}>
                       {geocoding ? <Loader2 size={15} className="animate-spin-slow" /> : <Crosshair size={15} />}
                       按地址解析坐标

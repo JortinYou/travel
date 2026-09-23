@@ -3,6 +3,7 @@ import { useTravelStore } from '@/store/useTravelStore';
 import { Pencil, Trash2, Plus, Download, Upload, X, Compass } from 'lucide-react';
 import FAB from '@/components/FAB';
 import ConfirmSheet from '@/components/ConfirmSheet';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import type { Trip } from '@/types';
 
 const CURRENCIES = [
@@ -61,6 +62,7 @@ export default function TripList() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  useBodyScrollLock(modalOpen);
 
   const openCreate = () => {
     setEditingId(null);

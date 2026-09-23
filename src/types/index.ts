@@ -7,6 +7,8 @@ export interface Place {
   time: string;
   duration: string;
   notes: string;
+  /** 用户粘贴保存的地图分享链接，地点卡片上可一键跳转 */
+  mapLink?: string;
 }
 
 export interface RouteInfo {

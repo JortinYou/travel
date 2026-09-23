@@ -3,6 +3,7 @@ import { useTravelStore } from '@/store/useTravelStore';
 import type { TransportBooking } from '@/types';
 import FAB from '@/components/FAB';
 import ConfirmSheet from '@/components/ConfirmSheet';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import MapLinks from '@/components/MapLinks';
 import {
   Plane,
@@ -103,6 +104,7 @@ export default function TransportManager() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  useBodyScrollLock(showModal);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; hotel: boolean } | null>(null);
   // 展开显示某条预订的地图外链
   const [mapOpenId, setMapOpenId] = useState<string | null>(null);

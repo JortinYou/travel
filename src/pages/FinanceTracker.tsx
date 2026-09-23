@@ -3,6 +3,7 @@ import { useTravelStore } from '@/store/useTravelStore';
 import type { Expense, ExpenseCategory } from '@/types';
 import FAB from '@/components/FAB';
 import ConfirmSheet from '@/components/ConfirmSheet';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { Plus, Pencil, Trash2, X, Receipt } from 'lucide-react';
 
 const CATEGORIES: ExpenseCategory[] = ['交通', '住宿', '餐饮', '门票', '购物', '其他'];
@@ -67,6 +68,7 @@ export default function FinanceTracker() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  useBodyScrollLock(showModal);
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | '全部'>('全部');
   const [budget, setBudget] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);

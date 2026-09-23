@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTravelStore } from '@/store/useTravelStore';
 import { cn } from '@/lib/utils';
 import FAB from '@/components/FAB';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import type { PackingItem } from '@/types';
 import { Plus, Trash2, Luggage, ChevronDown, ChevronUp, Check, X, ListPlus } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export default function PackingList() {
   const [showModal, setShowModal] = useState(false);
   const [newCategory, setNewCategory] = useState('证件');
   const [newName, setNewName] = useState('');
+  useBodyScrollLock(showModal);
   // 展开的分类集合：默认只展开第一个非空分类
   const [expandedCats, setExpandedCats] = useState<Set<string>>(() =>
     toCatSet(firstNonEmptyCategory(items))
