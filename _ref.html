@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>旅行账本</title>
+<meta name="description" content="多币种旅行记账 · 按消费日历史汇率折算人民币" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#FAF6F1" />
+<!-- iOS 添加到主屏幕 -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="旅行账本" />
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+
+<!-- 依赖（首次联网加载，Service Worker 缓存后离线可用） -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<!-- 关键垫片：lucide-react UMD 读取的是小写全局 react（实测其包装为 d(a.LucideReact={}, a.react)） -->
+<script>window.react = window.React;</script>
+<script crossorigin src="https://unpkg.com/lucide-react@0.436.0/dist/umd/lucide-react.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+
+<style>
+  :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+  html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; background: #FAF6F1; }
+  body { width: 100%; touch-action: manipulation; }
+  #root { height: 100%; overflow: hidden; }
+  #root > div { background: #FAF6F1 !important; }
+  /* App 外壳跟随真实视口高度（覆盖内联 100vh；body 为 fixed inset:0，其高度即实际可视区，全机型/横竖屏自适应） */
+  #root > div { height: 100% !important; min-height: 100% !important; }
+  #root > div > div { height: 100% !important; min-height: 100% !important; }
+  /* 手机端满宽：解除桌面预览用的 430px 列宽限制，任何 iPhone（含 440pt 的 Pro Max）都铺满屏幕 */
+  @media (max-width: 520px) { #root > div > div { max-width: none !important; } }
+  /* 启动占位（React 渲染后自动替换 #root 内容） */
+  .boot { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: -apple-system, "SF Pro Text", "PingFang SC", sans-serif; color: #8E8E93; }
+  .boot-icon { width: 64px; height: 64px; border-radius: 16px; background: #FF4F62; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 30px; font-weight: 800; }
+  .boot-spin { width: 18px; height: 18px; border: 2.5px solid #E5E0DA; border-top-color: #FF4F62; border-radius: 50%; animation: sp 0.8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+<script>
+/* iOS 独立模式安全区自适应：
+   ① env() 正常 → 完全交给 env()，不做任何干预
+   ② env() 失效且内容真的顶到屏幕最上沿（全屏模式）→ 按屏幕级别估算状态栏高度
+   ③ env() 失效但系统已自行扣掉状态栏（screen.height - innerHeight ≥ 20）→ 顶部为 0，只补底部指示条
+   适配所有 iPhone：判断基于真实视口差值，不写死机型。 */
+(function () {
+  var standalone = (navigator.standalone === true) || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  if (!standalone) return;
+  function measure(expr) {
+    try {
+      var d = document.createElement("div");
+      d.style.cssText = "position:fixed;left:0;top:0;width:1px;visibility:hidden;pointer-events:none;height:" + expr;
+      document.body.appendChild(d);
+      var h = d.getBoundingClientRect().height;
+      d.remove(); return h;
+    } catch (e) { return 0; }
+  }
+  function apply() {
+    var pt = measure("env(safe-area-inset-top,0px)");
+    var pb = measure("env(safe-area-inset-bottom,0px)");
+    var r = document.documentElement.style;
+    if (pt >= 20 || pb >= 10) { r.removeProperty("--safe-top"); r.removeProperty("--safe-bottom"); return; } // env 正常
+    var sMax = Math.max(screen.height, screen.width);
+    var tall = sMax >= 812;                                    // 刘海/灵动岛机型（含 mini）
+    var gap = screen.height - window.innerHeight;              // 系统已扣掉的顶部高度
+    var top = gap >= 20 ? 0 : (sMax >= 852 ? 59 : (tall ? 47 : 20));
+    var bottom = tall ? 34 : 0;                                // Home 指示条
+    r.setProperty("--safe-top", top + "px");
+    r.setProperty("--safe-bottom", bottom + "px");
+  }
+  function run() { if (document.body) setTimeout(apply, 50); }
+  if (document.readyState !== "loading") run(); else window.addEventListener("DOMContentLoaded", run);
+  window.addEventListener("orientationchange", function () { setTimeout(apply, 300); });
+  if (window.visualViewport) visualViewport.addEventListener("resize", function () { setTimeout(apply, 100); });
+})();
+</script>
+</head>
+<body>
+<div id="root">
+  <div class="boot">
+    <div class="boot-icon">¥</div>
+    <div class="boot-spin"></div>
+    <div style="font-size:13px">正在加载旅行账本…</div>
+  </div>
+</div>
+
+<!-- 应用主体（Babel 浏览器端转译 JSX；SW 缓存后离线可用） -->
+<script type="text/babel" data-presets="react" src="./app.jsx"></script>
+
+<script>
+  // 注册 Service Worker（离线缓存 + 历史汇率缓存）
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
+

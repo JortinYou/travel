@@ -1,0 +1,467 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 字体 */
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', serif;
+    --font-body: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', 'Source Han Sans SC', sans-serif;
+
+    /* ===== 四色体系 ===== */
+    --bg: #EFF2EF;        /* 页面底 */
+    --surface: #FFFFFF;   /* 卡片 */
+    --ink: #22281D;       /* 主文字 + 深色实块 */
+    --accent: #C6D960;    /* 唯一强调色（配 --ink 文字） */
+    --cool: #AABFCA;      /* 次要信息 / 未激活 */
+
+    /* ===== 派生：只用透明度，不新增色相 ===== */
+    --ink-2: rgba(34, 40, 29, 0.62);      /* 次要文字 */
+    --ink-3: rgba(34, 40, 29, 0.40);      /* 弱化文字 / 占位符 */
+    --ink-4: rgba(34, 40, 29, 0.22);      /* 图标默认色 */
+    --line: rgba(34, 40, 29, 0.10);       /* 描边 / 分隔线 */
+    --line-soft: rgba(34, 40, 29, 0.06);  /* 极淡分隔 */
+    --tint: rgba(34, 40, 29, 0.035);      /* 淡底填充 */
+    --accent-soft: rgba(198, 217, 96, 0.24);  /* 强调淡底 */
+    --accent-deep: #B3C74E;               /* 强调色按压态 */
+    --cool-soft: rgba(170, 191, 202, 0.26);   /* 次要淡底 */
+    --danger: #B4544C;
+    --danger-soft: rgba(180, 84, 76, 0.10);
+
+    /* 兼容旧命名（页面迁移期使用，最终只渲染上述色值） */
+    --color-bg: var(--bg);
+    --color-surface: var(--surface);
+    --color-text: var(--ink);
+    --color-text-secondary: var(--ink-2);
+    --color-text-muted: var(--ink-3);
+    --color-border: var(--line);
+    --color-border-soft: var(--line-soft);
+
+    /* 移动端顶栏 / 底栏总高（含刘海安全区） */
+    --topbar-h: calc(56px + env(safe-area-inset-top));
+    --tabbar-h: calc(58px + env(safe-area-inset-bottom));
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    font-weight: 400;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* ---------- 按钮 ---------- */
+  /* 主操作：亮强调底 + 墨色字（白字压不住亮黄绿） */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-sm transition-colors duration-150;
+    background: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-deep); }
+  .btn-primary:active:not(:disabled) { background: var(--accent-deep); }
+  .btn-primary:disabled { @apply opacity-40 cursor-not-allowed; }
+
+  /* 深色按钮：仅用于确认危险操作等极少数场景 */
+  .btn-dark {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-sm transition-colors duration-150;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn-dark:hover { background: #171C13; }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full text-sm transition-colors duration-150;
+    color: var(--ink-2);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-ghost:hover { background: var(--tint); color: var(--ink); }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm transition-colors duration-150 border;
+    color: var(--ink);
+    border-color: var(--line);
+    background: var(--surface);
+    font-weight: 500;
+  }
+  .btn-outline:hover { border-color: var(--ink-4); background: var(--tint); }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-sm transition-colors duration-150;
+    background: var(--danger);
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn-danger:hover { filter: brightness(0.94); }
+
+  /* 图标按钮：统一 32px 触点，无底色 */
+  .btn-icon {
+    @apply inline-flex items-center justify-center rounded-full transition-colors duration-150;
+    color: var(--ink-4);
+    width: 32px;
+    height: 32px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-icon:hover { background: var(--tint); color: var(--ink); }
+  .btn-icon.danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+  /* ---------- 卡片：无边框无阴影，靠留白与底色分层 ---------- */
+  .card {
+    @apply bg-white rounded-2xl;
+    background: var(--surface);
+  }
+  .card-hover { transition: background 0.15s; }
+  .card-hover:hover { background: #FCFDFB; }
+  .card-flat { @apply rounded-2xl; background: var(--surface); }
+
+  /* 淡底块（替代过去的彩色底 + 边框） */
+  .tint-block {
+    @apply rounded-2xl;
+    background: var(--tint);
+  }
+
+  /* ---------- 输入 ---------- */
+  .input-field {
+    @apply w-full px-3.5 py-2.5 rounded-xl text-sm transition-colors duration-150 outline-none border;
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .input-field:focus {
+    border-color: var(--ink-4);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .input-field::placeholder { color: var(--ink-3); }
+
+  .form-label {
+    @apply block text-xs mb-1.5;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .field-hint {
+    @apply block text-[11px] mt-1 leading-snug;
+    color: var(--ink-3);
+  }
+
+  /* ---------- 弹窗：移动端底部抽屉 / 桌面端居中 ---------- */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-4;
+    background: rgba(34, 40, 29, 0.28);
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.18s ease-out both;
+  }
+
+  .modal-content {
+    @apply w-full overflow-y-auto rounded-t-3xl lg:rounded-2xl lg:max-w-md;
+    background: var(--surface);
+    max-height: 90vh;
+    max-height: 90dvh;
+    box-shadow: 0 -8px 40px rgba(34, 40, 29, 0.14);
+    animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  @media (min-width: 1024px) {
+    .modal-content {
+      box-shadow: 0 20px 50px rgba(34, 40, 29, 0.16);
+      animation: modalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+  }
+  /* 抽屉顶部抓手 */
+  .modal-content::before {
+    content: '';
+    @apply block mx-auto rounded-full lg:hidden;
+    width: 36px;
+    height: 4px;
+    margin-top: 10px;
+    background: var(--line);
+  }
+  .modal-head {
+    @apply flex items-center justify-between px-5 py-4;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .modal-body { @apply px-5 py-4 space-y-3.5; }
+  .modal-foot {
+    @apply flex gap-2 px-5 py-3.5;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  /* ---------- 徽章：全局唯一样式 ---------- */
+  .tag {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] whitespace-nowrap;
+    background: var(--tint);
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .tag.accent { background: var(--accent-soft); color: var(--ink); }
+  .tag.cool { background: var(--cool-soft); color: #465862; }
+  .tag.danger { background: var(--danger-soft); color: var(--danger); }
+
+  /* ---------- 视图切换 ---------- */
+  .view-switch {
+    @apply inline-flex items-center gap-0.5 p-0.5 rounded-full;
+    background: var(--tint);
+  }
+  .view-btn {
+    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors duration-150;
+    color: var(--ink-3);
+  }
+  .view-btn:hover:not(.active) { color: var(--ink); }
+  .view-btn.active {
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ---------- 天数选择 ---------- */
+  .day-tab {
+    @apply w-full text-left px-3.5 py-3 rounded-xl transition-colors duration-150;
+  }
+  .day-tab:hover:not(.active) { background: var(--tint); }
+  .day-tab.active { background: var(--surface); }
+
+  /* ---------- 交通方式切换（折叠态 + 展开态）---------- */
+  /* 折叠态：整行可点，只显示结果摘要 */
+  .route-bar {
+    @apply w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-colors duration-150;
+    background: var(--tint);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .route-bar:hover { background: rgba(34, 40, 29, 0.055); }
+  .route-bar.open { background: var(--accent-soft); }
+
+  /* 展开态：4 个模式常驻可反复点击（核心交互，禁止移除） */
+  .mode-group {
+    @apply flex flex-wrap items-center gap-1;
+  }
+  .mode-btn {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-colors duration-150 border;
+    color: var(--ink-2);
+    border-color: var(--line);
+    background: var(--surface);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mode-btn:hover:not(:disabled):not(.active) { border-color: var(--ink-4); color: var(--ink); }
+  .mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .mode-btn:disabled { @apply opacity-60 cursor-wait; }
+
+  /* ---------- 表格 ---------- */
+  .data-table {
+    @apply w-full text-sm;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .data-table thead th {
+    @apply px-4 py-2.5 text-left text-xs font-medium;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .data-table tbody td {
+    @apply px-4 py-3 align-top;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .data-table tbody tr:hover td { background: var(--tint); }
+
+  /* ---------- 时间线 ---------- */
+  .timeline-rail {
+    position: absolute;
+    left: 13px;
+    top: 30px;
+    bottom: -10px;
+    width: 1px;
+    background: var(--line);
+  }
+  .timeline-dot {
+    @apply flex items-center justify-center rounded-full shrink-0;
+    width: 27px;
+    height: 27px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ---------- 进度条 ---------- */
+  .progress-track {
+    @apply w-full rounded-full overflow-hidden;
+    height: 4px;
+    background: var(--line-soft);
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: var(--accent);
+  }
+
+  /* ---------- 移动端外壳 ---------- */
+  .mobile-topbar {
+    padding-top: env(safe-area-inset-top);
+    background: rgba(239, 242, 239, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .mobile-topbar > div { height: 56px; }
+
+  .mobile-tabbar {
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .mobile-content { padding-bottom: var(--tabbar-h); }
+  @media (min-width: 1024px) {
+    .mobile-content { padding-bottom: 0; }
+  }
+
+  /* 吸附在移动端顶栏正下方（桌面端不吸附） */
+  .sticky-under-topbar {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 20;
+    background: var(--bg);
+  }
+  @media (min-width: 1024px) {
+    .sticky-under-topbar { position: static; background: transparent; }
+  }
+
+  .tab-item {
+    position: relative;
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
+    color: var(--ink-3);
+  }
+  .tab-item.active { color: var(--ink); }
+  .tab-item:active { background: var(--tint); }
+
+  /* 悬浮操作按钮 */
+  .fab {
+    @apply fixed z-20 flex items-center justify-center rounded-full;
+    right: 16px;
+    bottom: calc(var(--tabbar-h) + 14px);
+    width: 54px;
+    height: 54px;
+    background: var(--accent);
+    color: var(--ink);
+    box-shadow: 0 6px 20px rgba(34, 40, 29, 0.18);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s;
+    animation: fabIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .fab:active { transform: scale(0.92); background: var(--accent-deep); }
+
+  /* ---------- 横向滚动 chip 行 ---------- */
+  .chip-row {
+    @apply flex gap-2 overflow-x-auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+    padding-bottom: 2px;
+  }
+  .chip-row::-webkit-scrollbar { display: none; }
+
+  .chip {
+    @apply shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] transition-colors duration-150 border;
+    border-color: transparent;
+    background: var(--surface);
+    color: var(--ink-2);
+    scroll-snap-align: start;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip.active {
+    background: var(--ink);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* 触屏行：整行可点，带按压反馈 */
+  .touch-row {
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+  }
+  .touch-row:active { background: var(--tint); }
+
+  /* 列表内分隔线（替代逐卡描边） */
+  .hairline + .hairline { border-top: 1px solid var(--line-soft); }
+
+  /* 移动端隐藏 / 显示辅助 */
+  .m-only { display: block; }
+  @media (min-width: 1024px) { .m-only { display: none; } }
+  .d-only { display: none; }
+  @media (min-width: 1024px) { .d-only { display: block; } }
+}
+
+/* Leaflet */
+.leaflet-container {
+  @apply rounded-2xl;
+  height: 100%;
+  width: 100%;
+  background: var(--cool-soft);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  font-family: var(--font-body);
+}
+.leaflet-popup-tip { background: #fff; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(34, 40, 29, 0.16);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(34, 40, 29, 0.28); background-clip: content-box; }
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes sheetUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fabIn {
+  from { opacity: 0; transform: scale(0.6) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.28s ease-out both; }
+.animate-slide-in { animation: slideIn 0.28s ease-out both; }
+.animate-spin-slow { animation: spin 1s linear infinite; }
+
+@media print {
+  .no-print { display: none !important; }
+}
