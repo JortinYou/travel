@@ -458,8 +458,10 @@
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.animate-fade-in { animation: fadeIn 0.28s ease-out both; }
-.animate-slide-in { animation: slideIn 0.28s ease-out both; }
+/* fill 模式必须用 backwards：若用 both，动画结束后会永久保留 transform，
+   使页面容器成为 fixed 后代的包含块——弹窗会被困在容器内、被顶栏遮挡（移动端弹窗错位的根因） */
+.animate-fade-in { animation: fadeIn 0.28s ease-out backwards; }
+.animate-slide-in { animation: slideIn 0.28s ease-out backwards; }
 .animate-spin-slow { animation: spin 1s linear infinite; }
 
 @media print {
